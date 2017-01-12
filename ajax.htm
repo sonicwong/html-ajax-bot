@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AJAX</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+</head>
+
+<body>
+<p>url: <input id="url" type="text" style="width:900px" value=""></p>
+<p>retry delay (sec): <input id="retry_delay" type="text" value="5"></p>
+<p>retry count: <input readonly id="retry" type="text" value="0"></p>
+<p><a href="#" id="btn">[[ GET ]]</a></p>
+<div id="output" style="border:1px solid #000; padding: 1em;"></div>
+<p>last result:</p>
+<div id="result" style="border:1px solid #000; padding: 1em;"></div>
+    
+<script>
+var ajax_obj = null;
+var retry = 0;
+
+function stop_ajax(){
+	if(ajax_obj!=null){
+		ajax_obj.abort();
+	}
+}
+
+function load_ajax(){
+    if( $("#url").val() == "" ){
+        alert('Please enter url first.');
+    }else{
+        retry ++;
+        $("#retry").val(retry);
+
+        var retry_delay = parseInt($("#retry_delay").val()) * 1000;
+
+        var url = "http://query.yahooapis.com/v1/public/yql?"+
+                    "q=select%20*%20from%20html%20where%20url%3D%22"+
+                    encodeURIComponent($("#url").val())+
+                    "%22&format=json&return=?'";
+
+        stop_ajax();
+
+        ajax_obj = $.ajax({
+            url: url,
+            dataType: "json",
+            type: "get",
+            timeout: 5000,
+            success: function(data, textStatus, jqXHR){
+                stop_ajax();
+                $("#result").html(data.query.results.body);
+                var json = JSON.parse(data.query.results.body);
+                
+                //add your logic to stop ajax
+                if( 1 == 1 ){
+                    $("#output").html('retrying...');
+                    setTimeout(load_ajax, retry_delay);
+                    
+                }else{
+                    console.log(json);
+                    alert("done!");
+                    $("#output").html('done!');
+                }
+            },
+            error: function( jqXHR, textStatus, errorThrown ){
+                stop_ajax();
+                $("#output").html('error, retrying...');
+                setTimeout(load_ajax, retry_delay);
+            }
+        });
+    }
+}
+
+$("#btn").click(function(){
+    load_ajax();
+});
+
+</script>
+</body>
+</html>
